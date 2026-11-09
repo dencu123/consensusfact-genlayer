@@ -4,39 +4,60 @@ pragma solidity ^0.8.20;
 contract ConsensusFact {
 
     enum Verdict {
-        TRUE,
-        FALSE,
-        UNCERTAIN
+        Pending,
+        True,
+        False,
+        Uncertain
     }
 
     struct Fact {
         string claim;
         Verdict verdict;
         uint256 timestamp;
+        address requester;
     }
 
-    mapping(bytes32 => Fact) public facts;
+    uint256 public factCount;
 
-    event FactStored(
-        bytes32 indexed factId,
+    mapping(uint256 => Fact) public facts;
+
+    event FactRequested(
+        uint256 indexed factId,
+        string claim
+    );
+
+    event FactResolved(
+        uint256 indexed factId,
         Verdict verdict
     );
 
-    function storeFact(
-        string memory claim,
+    function requestFact(
+        string memory claim
+    ) public {
+
+        factCount++;
+
+        facts[factCount] = Fact({
+            claim: claim,
+            verdict: Verdict.Pending,
+            timestamp: block.timestamp,
+            requester: msg.sender
+        });
+
+        emit FactRequested(
+            factCount,
+            claim
+        );
+    }
+
+    function resolveFact(
+        uint256 factId,
         Verdict verdict
     ) public {
 
-        bytes32 factId =
-            keccak256(bytes(claim));
+        facts[factId].verdict = verdict;
 
-        facts[factId] = Fact(
-            claim,
-            verdict,
-            block.timestamp
-        );
-
-        emit FactStored(
+        emit FactResolved(
             factId,
             verdict
         );
